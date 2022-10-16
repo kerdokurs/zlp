@@ -92,8 +92,10 @@ func (b *Bot) respToError(resp *http.Response) error {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("error reading response body: %s", err)
 	}
+
+	// TODO: handle error from body
 	fmt.Println(string(body))
 
 	return fmt.Errorf(resp.Status)

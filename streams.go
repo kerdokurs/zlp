@@ -1,9 +1,11 @@
 package zlp
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 )
 
 type Stream struct {
@@ -15,10 +17,7 @@ type Stream struct {
 }
 
 func (b *Bot) GetSubscribedStreams() ([]Stream, error) {
-	req, err := b.constructRequest("GET", "users/me/subscriptions", nil)
-	if err != nil {
-		return nil, err
-	}
+	body, err := b.getResponseData("GET", "users/me/subscriptions", nil)
 
 	type response struct {
 		Result        string   `json:"result"`
@@ -26,15 +25,7 @@ func (b *Bot) GetSubscribedStreams() ([]Stream, error) {
 		Subscriptions []Stream `json:"subscriptions"`
 	}
 
-	resp, err := b.Client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
 	var res response
-	body, err := ioutil.ReadAll(req.Body)
-	fmt.Println(body)
 	if err != nil {
 		return nil, err
 	}
@@ -47,17 +38,7 @@ func (b *Bot) GetSubscribedStreams() ([]Stream, error) {
 }
 
 func (b *Bot) GetStreams() ([]Stream, error) {
-	req, err := b.constructRequest("GET", "streams", nil)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := b.Client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := b.getResponseData("GET", "streams", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -108,4 +89,40 @@ func (b *Bot) GetStream(id int) (*Stream, error) {
 	stream := res.Stream
 
 	return &stream, nil
+}
+
+func (b *Bot) CreateStream(name, description string, private bool, principals []string) (*Stream, error) {
+	type subscription struct {
+		Name        string `json:"name"`
+		Description string `json:"description"`
+	}
+	sub := subscription{
+		Name:        name,
+		Description: description,
+	}
+
+	sw := bytes.NewBufferString("")
+	if err := json.NewEncoder(sw).Encode(&sub); err != nil {
+		return nil, err
+	}
+
+	values := url.Values{}
+	values.Set("subscriptions", fmt.Sprintf("[%s]", sw.String()))
+	values.Set("invite_only", fmt.Sprintf("%t", private))
+	values.Set("principals", fmt.Sprintf("%v", principals))
+
+	_, err := b.getResponseData("POST", "users/me/subscriptions", &values)
+	if err != nil {
+		return nil, err
+	}
+
+	// type response struct {
+	// 	Response
+
+	// 	Subscribed        map[string][]string `json:"subscribed"`
+	// 	AlreadySubscribed map[string][]string `json:"already_subscribed"`
+	// 	Unauthorized      bool                `json:"unauthorized"`
+	// }
+
+	return nil, nil
 }
