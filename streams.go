@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
+	"strings"
 )
 
 type Stream struct {
@@ -109,20 +110,34 @@ func (b *Bot) CreateStream(name, description string, private bool, principals []
 	values := url.Values{}
 	values.Set("subscriptions", fmt.Sprintf("[%s]", sw.String()))
 	values.Set("invite_only", fmt.Sprintf("%t", private))
-	values.Set("principals", fmt.Sprintf("%v", principals))
+	if principals != nil {
+		prinStrs := make([]string, len(principals))
+		for i, prin := range principals {
+			prinStrs[i] = fmt.Sprintf(`"%s"`, prin)
+		}
+		values.Set("principals", fmt.Sprintf("[%s]", strings.Join(prinStrs, ",")))
+	}
+	values.Set("authorization_errors_fatal", "false")
+	// fmt.Println(values.Get("subscriptions"))
 
-	_, err := b.getResponseData("POST", "users/me/subscriptions", &values)
+	body, err := b.getResponseData("POST", "users/me/subscriptions", &values)
 	if err != nil {
 		return nil, err
 	}
 
-	// type response struct {
-	// 	Response
+	type response struct {
+		Response
 
-	// 	Subscribed        map[string][]string `json:"subscribed"`
-	// 	AlreadySubscribed map[string][]string `json:"already_subscribed"`
-	// 	Unauthorized      bool                `json:"unauthorized"`
-	// }
+		Subscribed        map[string][]string `json:"subscribed"`
+		AlreadySubscribed map[string][]string `json:"already_subscribed"`
+		Unauthorized      []string            `json:"unauthorized"`
+	}
+
+	var res response
+	if err := json.Unmarshal(body, &res); err != nil {
+		return nil, err
+	}
+	fmt.Printf("%+v\n", res)
 
 	return nil, nil
 }
