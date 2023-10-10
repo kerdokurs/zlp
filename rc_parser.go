@@ -16,7 +16,7 @@ type ZulipRC struct {
 const tagName = "rc"
 
 // https://stackoverflow.com/a/55775573
-func LoadRC(fileName string) (*ZulipRC, error) {
+func loadRC(fileName string) (*ZulipRC, error) {
 	file, err := os.Open(fileName)
 	if err != nil {
 		return nil, err
@@ -69,7 +69,7 @@ func splitter(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	return
 }
 
-func RCFromEnv() (*ZulipRC, error) {
+func loadRCFromEnv() (*ZulipRC, error) {
 	rc := ZulipRC{
 		Email:  os.Getenv("ZULIP_EMAIL"),
 		APIKey: os.Getenv("ZULIP_APIKEY"),
