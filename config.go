@@ -12,6 +12,7 @@ type Config struct {
 	ZulipRC
 	ApiVersion string
     Client Doer
+    UserAgent string
 }
 
 type ConfigFunction func(*Config)

@@ -21,6 +21,8 @@ const (
 	Error   = "error"
 )
 
+const defaultUserAgent = "go-zlp"
+
 /**
  * Common response data type
  *
@@ -59,6 +61,13 @@ func (b *Bot) constructRequest(method, endpoint string, body *url.Values) (*http
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+    userAgent := defaultUserAgent
+    if len(b.Config.UserAgent) > 0 {
+        userAgent = b.Config.UserAgent
+    }
+    req.Header.Set("User-Agent", userAgent)
+
 	req.SetBasicAuth(b.Email, b.Config.APIKey)
 
 	return req, nil
