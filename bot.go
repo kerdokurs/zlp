@@ -39,6 +39,12 @@ func WithHTTPClient(client Doer) ConfigFunction {
     }
 }
 
+func WithUserAgent(userAgent string) ConfigFunction {
+    return func(c *Config) {
+        c.UserAgent = userAgent
+    }
+}
+
 func NewBot(cfgs ...ConfigFunction) *Bot {
 	cfg := defaultConfig()
 	for _, fn := range cfgs {
