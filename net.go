@@ -3,7 +3,6 @@ package zlp
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -48,7 +47,7 @@ func (r *Response) IsError() bool {
 }
 
 func (b *Bot) constructRequest(method, endpoint string, body *url.Values) (*http.Request, error) {
-	url := fmt.Sprintf("%s/api/%s/%s", b.ApiUrl, b.ApiVersion, endpoint)
+	url := fmt.Sprintf("%s/api/%s/%s", b.Config.APIUrl, b.ApiVersion, endpoint)
 	var bodyReader io.Reader = nil
 	if body != nil {
 		bodyReader = strings.NewReader(body.Encode())
@@ -60,7 +59,7 @@ func (b *Bot) constructRequest(method, endpoint string, body *url.Values) (*http
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.SetBasicAuth(b.Email, b.Key)
+	req.SetBasicAuth(b.Email, b.Config.APIKey)
 
 	return req, nil
 }
@@ -79,7 +78,7 @@ func (b *Bot) getResponseData(method, endpoint string, body *url.Values) ([]byte
 		return nil, err
 	}
 	defer resp.Body.Close()
-	return ioutil.ReadAll(resp.Body)
+	return io.ReadAll(resp.Body)
 }
 
 func (b *Bot) respToError(resp *http.Response) error {
@@ -90,7 +89,7 @@ func (b *Bot) respToError(resp *http.Response) error {
 		return nil
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Errorf("error reading response body: %s", err)
 	}

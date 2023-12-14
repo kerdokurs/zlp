@@ -4,33 +4,53 @@ import (
 	"net/http"
 )
 
-const DefaultApiVersion = "v1"
-
 type Bot struct {
-	Email  string
-	Key    string
-	ApiUrl string
-
-	ApiVersion string
-
+	Config
 	Client Doer
 }
 
-func NewBot(rc *ZulipRC) *Bot {
+func WithRCFile(fileName string) ConfigFunction {
+	return func(c *Config) {
+		rc, err := loadRC(fileName)
+		if err != nil {
+			panic(err)
+		}
+
+		c.ZulipRC = *rc
+	}
+}
+
+func WithRCEnv() ConfigFunction {
+	return func(c *Config) {
+		rc, _ := loadRCFromEnv()
+		c.ZulipRC = *rc
+	}
+}
+
+func WithAPIVersion(version APIVersion) ConfigFunction {
+	return func(c *Config) {
+		c.ApiVersion = version
+	}
+}
+
+func WithHTTPClient(client Doer) ConfigFunction {
+    return func(c *Config) {
+        c.Client = client
+    }
+}
+
+func NewBot(cfgs ...ConfigFunction) *Bot {
+	cfg := defaultConfig()
+	for _, fn := range cfgs {
+		fn(&cfg)
+	}
+
 	return &Bot{
-		Email:  rc.Email,
-		Key:    rc.APIKey,
-		ApiUrl: rc.APIUrl,
+		Config: cfg,
+        Client: cfg.Client,
 	}
 }
 
 type Doer interface {
 	Do(*http.Request) (*http.Response, error)
-}
-
-func (b *Bot) Init() {
-	b.Client = &http.Client{}
-	if b.ApiVersion == "" {
-		b.ApiVersion = DefaultApiVersion
-	}
 }
