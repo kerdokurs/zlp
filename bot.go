@@ -33,6 +33,12 @@ func WithAPIVersion(version APIVersion) ConfigFunction {
 	}
 }
 
+func WithHTTPClient(client Doer) ConfigFunction {
+    return func(c *Config) {
+        c.Client = client
+    }
+}
+
 func NewBot(cfgs ...ConfigFunction) *Bot {
 	cfg := defaultConfig()
 	for _, fn := range cfgs {
@@ -41,7 +47,7 @@ func NewBot(cfgs ...ConfigFunction) *Bot {
 
 	return &Bot{
 		Config: cfg,
-		Client: http.DefaultClient,
+        Client: cfg.Client,
 	}
 }
 

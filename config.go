@@ -1,5 +1,7 @@
 package zlp
 
+import "net/http"
+
 type APIVersion = string
 
 const (
@@ -9,6 +11,7 @@ const (
 type Config struct {
 	ZulipRC
 	ApiVersion string
+    Client Doer
 }
 
 type ConfigFunction func(*Config)
@@ -16,5 +19,6 @@ type ConfigFunction func(*Config)
 func defaultConfig() Config {
 	return Config{
 		ApiVersion: ApiV1,
+        Client: http.DefaultClient,
 	}
 }
